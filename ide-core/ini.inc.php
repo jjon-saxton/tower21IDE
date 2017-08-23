@@ -1,5 +1,5 @@
 <?php
-class MikaINI
+class IDEINI
 {
   private $file;
   private $sections;
@@ -7,7 +7,7 @@ class MikaINI
 
   public function __construct($name,$process_sections=false)
   {
-   $file="./mi-data/".$name.".ini";
+   $file="./ide-data/".$name.".ini";
    $arr=parse_ini_file($file,$process_sections);
 
    $this->sections=$process_sections;

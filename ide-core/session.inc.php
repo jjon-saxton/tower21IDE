@@ -1,7 +1,7 @@
 <?php
 require_once "ide-core/ini.inc.php";
 require_once "ide-core/csv.inc.php";
-$cfg=new MikaINI('settings');
+$cfg=new IDEINI('settings');
 
 session_name($cfg->session);
 session_start();
@@ -12,18 +12,18 @@ if (@$_SESSION['data'])
 }
 else
 {
-  $auth=new MikaSession();
+  $auth=new IDESession();
   $_SESSION['data']=serialize($auth);
 }
 
-class MikaSession
+class IDESession
 {
   public $name;
   private $user;
 
   public function __construct()
   {
-   $u=new MikaCSV('auth');
+   $u=new CSV('auth');
    $this->user=$u->getRow('guest','Handle');
    $this->name='guest';
   }
@@ -35,7 +35,7 @@ class MikaSession
 
   public function login($name,$pass)
   {
-   $u=new MikaCSV('auth');
+   $u=new CSV('auth');
    $user=$u->getRow($name,'Handle');
 
    if ($user->Password == crypt($pass,$user->Password))
@@ -54,7 +54,7 @@ class MikaSession
   public function logout()
   {
    $this->name='guest';
-   $u=new MikaCSV('auth');
+   $u=new CSV('auth');
    $this->user=$u->getRow('guest','Handle');
 
    return true;

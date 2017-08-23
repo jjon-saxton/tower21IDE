@@ -1,5 +1,5 @@
 <?php
-class MikaCSV
+class CSV
 {
   private $raw;
   private $file;
@@ -8,7 +8,7 @@ class MikaCSV
 
   public function __construct($name,$process_headers=true)
   {
-   $file="./mi-data/{$name}.csv";
+   $file="./ide-data/{$name}.csv";
    $raw=file_get_contents($file);
 
    $temp=array_map('str_getcsv',file($file));
@@ -45,11 +45,11 @@ class MikaCSV
     
     if (empty($distilled))
     {
-      return new MikaCSVResult($full); //No Matches so use the entire array as result
+      return new CSVResult($full); //No Matches so use the entire array as result
     }
     else
     {
-      return new MikaCSVResult($distilled); //Matches found so we will narrow it down to just the matches
+      return new CSVResult($distilled); //Matches found so we will narrow it down to just the matches
     }
   }
 
@@ -68,7 +68,7 @@ class MikaCSV
 
    if (is_array($temp[$r]))
    {
-    return new MikaCSVRow($temp[$r]);
+    return new CSVRow($temp[$r]);
    }
    else
    {
@@ -214,7 +214,7 @@ class MikaCSV
   }
 }
 
-class MikaCSVResult
+class CSVResult
 {
   private $array=array();
   private $rowNum=0;
@@ -246,7 +246,7 @@ class MikaCSVResult
   }
 }
 
-class MikaCSVRow
+class CSVRow
 {
   private $array=array();
 

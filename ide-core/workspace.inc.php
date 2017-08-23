@@ -7,7 +7,7 @@ class WorkSpace
   private $user;
   private $template;
   
-  public function __construct(MikaSession $user)
+  public function __construct(IDESession $user)
   {
     $this->user=$user;
     $this->template=file_get_contents("ide-data/template.html");

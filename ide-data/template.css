@@ -1,0 +1,33 @@
+body {padding-top: 70px}
+a:link, a:visited {color:#889}
+a:active, a:hover {color:#337ab7}
+
+body.dragging, body.dragging * {
+  cursor: move !important;
+}
+
+.dragged {
+  position: absolute;
+  opacity: 0.5;
+  z-index: 2000;
+}
+
+.placeholder {
+  border: 1px solid green;
+  min-height: 1em;
+  background-color: white;
+  -webkit-box-shadow: 0px 0px 10px #888;
+  -moz-box-shadow: 0px 0px 10px #888;
+  box-shadow: 0px 0px 10px #888;
+}
+
+ol.moveable {
+  list-style: none;
+  padding-left: 0;
+  min-height: 1em;
+}
+
+ol.moveable ol {
+  list-style: none;
+  min-height: inherit;
+}
