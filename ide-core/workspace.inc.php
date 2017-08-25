@@ -50,7 +50,16 @@ class WorkSpace
     $cfg=new IDEINI('settings');
     $vars['sitename']=$cfg->name;
     
-    //TODO replace variables in template
+    $html=preg_replace_callback("#<var>(.*?)</var>#",function($match) use ($vars){
+      if (empty($vars[$match[1]]))
+      {
+        return "<span class=\"text-warning\">{$match[1]} is not defined!</span>";
+      }
+      else
+      {
+        return $vars[$match[1]];
+      }
+    },$html);
     
     return $html;
   }
