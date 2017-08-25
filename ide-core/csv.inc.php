@@ -231,7 +231,7 @@ class CSVResult
     if (!empty($temp[$k]) && is_array($temp[$k]))
     {
       $this->rowNum=$k+1;
-      return new MikaCSVRow($temp[$k]);
+      return new CSVRow($temp[$k]);
     }
     else
     {
@@ -268,7 +268,15 @@ class CSVRow
 
 function _combine_array(&$row,$key,$header)
 {
- $row=array_combine($header,$row);
+ if (count ($header) == count($row))
+ {
+  $row=array_combine($header,$row);
+ }
+  else
+  {
+    var_dump(count($header));
+    var_dump(count($row));
+  }
 }
 
 function array_to_csv(array $array)
