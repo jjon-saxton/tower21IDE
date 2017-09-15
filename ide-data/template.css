@@ -5,6 +5,12 @@ body.dragging, body.dragging * {
   cursor: move !important;
 }
 
+.text{
+  position:relative;
+  top:1em;
+  height:680px;
+}
+
 .dragged {
   position: absolute;
   opacity: 0.5;

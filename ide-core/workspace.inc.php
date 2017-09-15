@@ -245,7 +245,33 @@ class Project
     switch ($main)
     {
       case 'text':
-        $content="<div class=\"editor\">".file_get_contents($fpath)."</div>\n";
+        $txt=htmlspecialchars(file_get_contents($fpath));
+        $ext=pathinfo($path,PATHINFO_EXTENSION);
+        switch ($ext)
+        {
+          case 'js':
+            $code="javascript";
+            break;
+          case 'html':
+          case 'htm':
+            $code="html";
+            break;
+          case 'md':
+          case 'mmd':
+            $code="markdown";
+            break;
+          default:
+            $code=$ext;
+        }
+        $content=<<<HTML
+<pre id="editor" class="preview text">{$txt}</pre>
+<script src="./ide-core/ace/ace.js"></script>
+<script>
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/dreamweaver");
+    editor.getSession().setMode("ace/mode/{$code}");
+</script>
+HTML;
         break;
       case 'image':
         switch ($sub)
