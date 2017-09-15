@@ -264,12 +264,22 @@ class Project
             $code=$ext;
         }
         $content=<<<HTML
-<pre id="editor" class="preview text">{$txt}</pre>
+<div id="operations" class="btn-group">
+<button type="button" id="save" class="btn btn-primary">Save</button>
+<button type="button" id="view" class="btn btn-success">Preview</button>
+<button type="button" id="unlink" class="btn btn-danger">Delete!</button>
+</div>
+<div id="editor" class="preview text">{$txt}</div>
 <script src="./ide-core/ace/ace.js"></script>
 <script>
     var editor = ace.edit("editor");
     editor.setTheme("ace/theme/dreamweaver");
     editor.getSession().setMode("ace/mode/{$code}");
+        
+    $("#operations button#save").click(function(){
+      var txt=editor.getValue();
+      alert(txt);
+    });
 </script>
 HTML;
         break;

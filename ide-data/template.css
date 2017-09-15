@@ -9,6 +9,7 @@ body.dragging, body.dragging * {
   position:relative;
   top:1em;
   height:680px;
+  margin-bottom: 1em;
 }
 
 .dragged {
