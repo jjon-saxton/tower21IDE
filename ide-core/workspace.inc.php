@@ -32,7 +32,7 @@ class WorkSpace
       {
         if (empty($_GET['file']))
         {
-          //TODO HTML instructions for user to find and 'open' a file
+          $vars['cfile']=$cproj->Description;
         }
         else
         {
@@ -106,6 +106,7 @@ HTML;
   <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">{$this->user->name}<span class="caret"></span></button>
   <ul class="dropdown-menu">
     <li><a href="#">Your Settings</a></li>
+    <li><a href="#">Contribute</a></li>
     <li><a href="#">Change Password</a></li>
     <li><hr /></li>
     <li><a href="#">Help</a></li>
@@ -118,25 +119,33 @@ HTML;
        if (empty($_GET['project']))
        {
         $cpname="Projects";
+        $cpopts=<<<HTML
+<li><a href="#">Project Folders</a></li>
+HTML;
        }
        else
        {
-        //TODO get current project name
+         $cp=new Project($_GET['project'],$this->user);
+         $cpname=$cp->Name;
+         $cpopts=<<<HTML
+<li><a href="./{$cp->Folder}" target="_new">View Project</a></li>
+<li><a href="#">Project Settings</a></li>
+<li><a href="#">Remove Project</a></li>
+HTML;
        }
        $vars['userbtns'].=<<<HTML
   <div class="btn-group">
   <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">{$cpname} <span class="caret"></span></button>
   <ul class="dropdown-menu">
     <li><a href="#">Add Project</a></li>
-    <li><a href="#">Project Settings</a></li>
-    <li class="text-danger"><a href="#">Remove Project</a></li>
+    {$cpopts}
   </ul>
   </div>
 HTML;
       }
       if ($this->user->Type == "admin")
       {
-        $vars['userbtns'].="<a href=\"#\" class=\"btn btn-default\">IDE Settings</a>";
+        $vars['userbtns'].="<a href=\"#\" class=\"btn btn-default\">Registrations</a> <a href=\"#\" class=\"btn btn-default\">IDE Settings</a>";
       }
       $vars['userbtns'].="</div>\n";
     }
@@ -203,6 +212,59 @@ class Project
       return false;
     }
   }
+  
+  public function fetchFiles($path=null)
+  {
+    $cfg=new IDEINI('settings');
+    $path=trim($path,"/");
+    $fpath=$cfg->root.$this->info->Folder."/".$path;
+    $html="<ul class=\"filelist\">\n";
+    
+    foreach(preg_grep("/^([^.])/",scandir($fpath)) as $item)
+    {
+      if (is_dir($fpath."/".$item))
+      {
+        $html.="<li class=\"list-item\"><span class=\"glyphicon glyphicon-folder-close\"></span> {$item}\n".$this->fetchFiles($path."/".$item)."</li>\n";
+      }
+      else
+      {
+        $html.="<li class=\"list-item\"><span class=\"glyphicon glyphicon-file\"></span> <a href=\"?project={$_GET['project']}&file={$path}/{$item}\">{$item}</a></li>\n";
+      }
+    }
+    
+    return $html."</ul>\n";
+  }
+  
+  public function openFile($path)
+  {
+    $cfg=new IDEINI('settings');
+    $path=ltrim($path,"/");
+    $fpath=$cfg->root.$this->info->Folder."/".$path;
+    $type=mime_content_type($fpath);
+    list($main,$sub)=explode("/",$type);
+    switch ($main)
+    {
+      case 'text':
+        $content="<div class=\"editor\">".file_get_contents($fpath)."</div>\n";
+        break;
+      case 'image':
+        switch ($sub)
+        {
+          case 'jpg':
+          case 'png':
+            $content="<div class=\"preview image\"><img src=\"{$cfg->url}{$this->info->Folder}/{$path}\"></div>\n";
+            break;
+          default:
+            $content="<div class=\"alert alert-warning\">The image '{$path}' cannot be viewed in browser, '{$sub}' not supported!</div>\n";
+        }
+        break;
+      case 'application':
+      default:
+        $content="<div class=\"alert alert-warning\">The file '{$path}' cannot be opened because there is no preview available for the type '{$type}'.</div>\n";
+    }
+    
+    return $content;
+  }
 }
 
 class ProjectList
@@ -219,7 +281,7 @@ class ProjectList
   public function fetchNames()
   {
     $html="<ul class=\"projects ulist list-unstyled\">\n";
-    if($q=$this->table->query("Author=".$this->user->ID))
+    if($q=$this->table->query("Manager=".$this->user->ID))
     {
       while ($row=$q->fetch())
       {
