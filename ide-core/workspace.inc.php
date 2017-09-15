@@ -23,7 +23,7 @@ class WorkSpace
     }
     else
     {
-      $cproj=new Project(); //TODO must be able to select a project!
+      $cproj=new Project($_GET['project'],$this->user); //TODO must be able to select a project!
       if (empty($vars['filelist']))
       {
         $vars['filelist']=$cproj->fetchFiles($_GET['path']);
@@ -94,13 +94,51 @@ HTML;
     }
     $cfg=new IDEINI('settings');
     $vars['sitename']=$cfg->name;
-    if (empty($this->user->Type) || $this->user->Type == "guest")
+    if (@$this->user->Type == "guest")
     {
       $vars['userbtns']="<div id=\"MainToolbar\" class=\"btn-group\"><a href=\"{$cfg->url}?action=login&modal=1\" data-toggle=\"modal\" data-target=\"#AJAXModal\" id=\"login\" class=\"btn btn-default\">Login</a></div>\n";
     }
     else
     {
-      $vars['userbtns']="<div id=\"MainToolbar\" class=\"btn-group\"></button></div>\n";
+      $vars['userbtns']=<<<HTML
+ <div id="MainToolbar" class="btn-group">
+  <div class="btn-group">
+  <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">{$this->user->name}<span class="caret"></span></button>
+  <ul class="dropdown-menu">
+    <li><a href="#">Your Settings</a></li>
+    <li><a href="#">Change Password</a></li>
+    <li><hr /></li>
+    <li><a href="#">Help</a></li>
+    <li><a href="./?action=logout">Logout</a></li>
+  </ul>
+  </div>
+HTML;
+      if ($this->user->Type == "manager" || $this->user->Type= "admin")
+      {
+       if (empty($_GET['project']))
+       {
+        $cpname="Projects";
+       }
+       else
+       {
+        //TODO get current project name
+       }
+       $vars['userbtns'].=<<<HTML
+  <div class="btn-group">
+  <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">{$cpname} <span class="caret"></span></button>
+  <ul class="dropdown-menu">
+    <li><a href="#">Add Project</a></li>
+    <li><a href="#">Project Settings</a></li>
+    <li class="text-danger"><a href="#">Remove Project</a></li>
+  </ul>
+  </div>
+HTML;
+      }
+      if ($this->user->Type == "admin")
+      {
+        $vars['userbtns'].="<a href=\"#\" class=\"btn btn-default\">IDE Settings</a>";
+      }
+      $vars['userbtns'].="</div>\n";
     }
     
     if (empty($vars['title']))
@@ -125,7 +163,46 @@ HTML;
 
 class Project
 {
+  private $table;
+  private $user;
+  private $info;
   
+  public function __construct($id=1,IDESession $auth)
+  {
+    $table=new CSV('projects');
+    $info=$table->getRow($id);
+    
+    $this->table=$table;
+    if (empty($info))
+    {
+      return false;
+    }
+    else
+    {
+      $this->info=$info;
+      $this->user=$auth;
+      
+      return true;
+    }
+  }
+  
+  public function __get($k)
+  {
+    return $this->info->$k;
+  }
+  
+  public function getInfoByName($name)
+  {
+    if ($info=$this->table->getRow($name,"Name"))
+    {
+      $this->info=$info;
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
 }
 
 class ProjectList
@@ -142,10 +219,18 @@ class ProjectList
   public function fetchNames()
   {
     $html="<ul class=\"projects ulist list-unstyled\">\n";
-    $q=$this->table->query();
-    while ($row=$q->fetch())
+    if($q=$this->table->query("Author=".$this->user->ID))
     {
-      $html.="<li>{$row->Name}</li>\n";
+      while ($row=$q->fetch())
+      {
+        $proj=new Project(null,$this->user);
+        $proj->getInfoByName($row->Name);
+        $html.="<li><a href=\"?project={$proj->ID}\">{$proj->Name}</a></li>\n";
+      }
+    }
+    else
+    {
+      $html.="<li class=\"text-warning\">You are not a part of any projects</li>\n";
     }
     
     return $html.="</ul>\n";

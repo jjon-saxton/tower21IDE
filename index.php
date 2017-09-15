@@ -12,6 +12,7 @@ switch ($_GET['action'])
     }
     elseif ($auth->login($_POST['Handle'],$_POST['password']))
     {
+      $_SESSION['data']=serialize($auth);
       header("Location: ./?author=".$auth->ID);
     }
     else
@@ -22,7 +23,8 @@ switch ($_GET['action'])
   case 'logout':
     if ($auth->logout())
     {
-      header ("Location: ./?action=login");
+      $_SESSION['data']=serialize($auth);
+      header ("Location: ./?loggedin=0");
     }
     else
     {

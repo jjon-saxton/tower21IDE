@@ -43,9 +43,13 @@ class CSV
     
     //TODO further filter by $limit and $offset then sort by field defined in $sort
     
-    if (empty($distilled))
+    if (empty($q) && empty($distilled))
     {
-      return new CSVResult($full); //No Matches so use the entire array as result
+      return new CSVResult($full); //No query an no matches so use the entire array as result
+    }
+    elseif (empty($distilled))
+    {
+      return null; //query, but no matches, so return nothing
     }
     else
     {
