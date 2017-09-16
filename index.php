@@ -24,7 +24,7 @@ switch ($_GET['action'])
     if ($auth->logout())
     {
       $_SESSION['data']=serialize($auth);
-      header ("Location: ./?loggedin=0");
+      header ("Location: ./");
     }
     else
     {

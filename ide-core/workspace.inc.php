@@ -37,7 +37,7 @@ class WorkSpace
           {
             require_once('ide-core/markdown.inc.php');
             $markdown=$cproj->openFileRaw("/README.md");
-            $vars['cfile'].="<hr />".Markdown($markdown); //TODO Transform markdown to HTML
+            $vars['cfile'].="<hr />".Markdown($markdown);
           }
         }
         else
