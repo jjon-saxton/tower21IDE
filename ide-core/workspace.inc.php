@@ -23,7 +23,7 @@ class WorkSpace
     }
     else
     {
-      $cproj=new Project($_GET['project'],$this->user); //TODO must be able to select a project!
+      $cproj=new Project($_GET['project'],$this->user);
       if (empty($vars['filelist']))
       {
         $vars['filelist']=$cproj->fetchFiles($_GET['path']);
@@ -33,6 +33,12 @@ class WorkSpace
         if (empty($_GET['file']))
         {
           $vars['cfile']=$cproj->Description;
+          if ($cproj->fileExists("/README.md"))
+          {
+            require_once('ide-core/markdown.inc.php');
+            $markdown=$cproj->openFileRaw("/README.md");
+            $vars['cfile'].="<hr />".Markdown($markdown); //TODO Transform markdown to HTML
+          }
         }
         else
         {
@@ -362,6 +368,25 @@ HTML;
     return $content;
   }
   
+  public function openFileRaw($path)
+  {
+    $cfg=new IDEINI('settings');
+    $path=ltrim($path,"/");
+    $fpath=$cfg->root.$this->info->Folder."/".$path;
+    $type=mime_content_type($fpath);
+    list($main,$sub)=explode("/",$type);
+    
+    switch ($main)
+    {
+      case 'text':
+        return file_get_contents($fpath);
+        break;
+      case 'image':
+      default:
+        return false;
+    }
+  }
+  
   public function saveFile($path,$content)
   {
     $cfg=new IDEINI('settings');
@@ -369,6 +394,15 @@ HTML;
     $fpath=$cfg->root.$this->info->Folder."/".$path;
     
     return file_put_contents($fpath,$content);
+  }
+  
+  public function fileExists($path)
+  {
+    $cfg=new IDEINI('settings');
+    $path=ltrim($path,"/");
+    $fpath=$cfg->root.$this->info->Folder."/".$path;
+    
+    return file_exists($fpath);
   }
 }
 
