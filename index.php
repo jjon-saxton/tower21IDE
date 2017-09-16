@@ -13,7 +13,7 @@ switch ($_GET['action'])
     elseif ($auth->login($_POST['Handle'],$_POST['password']))
     {
       $_SESSION['data']=serialize($auth);
-      header("Location: ./?author=".$auth->ID);
+      header("Location: ./");
     }
     else
     {
@@ -30,8 +30,14 @@ switch ($_GET['action'])
     {
       print $workspace->getError(500);
     }
-  case 'view':
   default:
+    if (empty($_GET['action']))
+    {
     print $workspace->getPage();
+    }
+    else
+    {
+      print $workspace->getReply($_GET['action'],$_POST);
+    }
 }
 ?>

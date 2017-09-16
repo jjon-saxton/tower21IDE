@@ -44,6 +44,52 @@ class WorkSpace
     return $this->replaceVars($vars);
   }
   
+  public function getReply($action,array $data)
+  {
+    if (empty($_GET['modal']))
+    {
+      $html=$this->template;
+    }
+    else
+    {
+      $html=<<<HTML
+<div class="modal-header">
+<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+<h4><var>title</var></h4>
+</div>
+<div class="modal-body"><var>message</var></div>
+HTML;
+    }
+
+    switch ($action)
+    {
+      case 'save':
+        $vars['title']="Save File";
+        if (empty($_GET['project']))
+        {
+          $vars['message']="<div class=\"alert alert-danger\">A project must be selected so I can no what file you are editing!</div>\n";
+        }
+        elseif (empty($_GET['file']))
+        {
+          $vars['message']="<div class=\"alert alert-danger\">No file selected!</div>\n";
+        }
+        else
+        {
+          $cp=new Project($_GET['project'],$this->user);
+          if ($cp->saveFile($_GET['file'],$data['text']))
+          {
+            $vars['message']="<div class=\"alert alert-info\">Your changes were saved!</div>\n";
+          }
+          else
+          {
+            $vars['message']="<div class=\"alert alert-warning\">Could not save file! This is likely a server error, please try again.</div>\n";
+          }
+        }
+    }
+    
+    return $this->replaceVars($vars,$html);
+  }
+  
   public function getForm($formname=null)
   {
     $cfg=new IDEINI('settings');
@@ -270,6 +316,9 @@ class Project
 <button type="button" id="unlink" class="btn btn-danger">Delete!</button>
 </div>
 <div id="editor" class="preview text">{$txt}</div>
+<form id="FinalText" action="./?action=save" method="post">
+<input type="hidden" name="text" value="">
+</form>
 <script src="./ide-core/ace/ace.js"></script>
 <script>
     var editor = ace.edit("editor");
@@ -278,7 +327,18 @@ class Project
         
     $("#operations button#save").click(function(){
       var txt=editor.getValue();
-      alert(txt);
+      $.ajax({
+        type: "POST",
+        url: "./?action=save&modal=1&project={$_GET['project']}&file={$_GET['file']}",
+        dataType: "html",
+        data: {
+          text: txt
+        },
+        success:function(data){
+          $("#AJAXModal").find(".modal-content").html(data);
+          $("#AJAXModal").modal('show');
+        }
+      })
     });
 </script>
 HTML;
@@ -300,6 +360,15 @@ HTML;
     }
     
     return $content;
+  }
+  
+  public function saveFile($path,$content)
+  {
+    $cfg=new IDEINI('settings');
+    $path=ltrim($path,"/");
+    $fpath=$cfg->root.$this->info->Folder."/".$path;
+    
+    return file_put_contents($fpath,$content);
   }
 }
 
