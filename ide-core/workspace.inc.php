@@ -181,6 +181,7 @@ HTML;
          $cpname=$cp->Name;
          $cpopts=<<<HTML
 <li><a href="./{$cp->Folder}" target="_new">View Project</a></li>
+<li><a href="./?project={$_GET['project']}&item=/">Open Project Directory</a></li>
 <li><a href="#">Project Settings</a></li>
 <li><a href="#">Remove Project</a></li>
 HTML;
