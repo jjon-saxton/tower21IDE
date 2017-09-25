@@ -1,4 +1,2 @@
 ID,Manager,Name,Description,Type,Folder,GIT
-1,2,MomoKO,"Powerful, extensible content mangement system that keeps you in your site",CMS,momoko,
-2,2,WebComiX Manager,"Mangages interactive and motion comics",CMS,wcm,
-3,2,Project Mika,"A simple content mangement system which relays on text files and needs no database server",CMS,mika,
+1,2,"Test Project","Quick and easy way to test file and folder functions.",DEV,root/test,

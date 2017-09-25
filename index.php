@@ -33,7 +33,7 @@ switch ($_GET['action'])
   default:
     if (empty($_GET['action']))
     {
-    print $workspace->getPage();
+      print $workspace->getPage();
     }
     else
     {

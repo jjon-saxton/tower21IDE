@@ -30,7 +30,7 @@ class WorkSpace
       }
       if (empty($vars['cfile']))
       {
-        if (empty($_GET['file']))
+        if (empty($_GET['item']))
         {
           $vars['cfile']=$cproj->Description;
           if ($cproj->fileExists("/README.md"))
@@ -42,7 +42,7 @@ class WorkSpace
         }
         else
         {
-          $vars['cfile']=$cproj->openFile($_GET['file']);
+          $vars['cfile']=$cproj->openFile($_GET['item']);
         }
       }
     }
@@ -276,11 +276,11 @@ class Project
     {
       if (is_dir($fpath."/".$item))
       {
-        $html.="<li class=\"list-item\"><span class=\"glyphicon glyphicon-folder-close\"></span> {$item}\n".$this->fetchFiles($path."/".$item)."</li>\n";
+        $html.="<li class=\"list-item\"><span class=\"glyphicon glyphicon-folder-close\"></span> <a href=\"?project={$_GET['project']}&item={$path}/{$item}\">{$item}</a>\n".$this->fetchFiles($path."/".$item)."</li>\n";
       }
       else
       {
-        $html.="<li class=\"list-item\"><span class=\"glyphicon glyphicon-file\"></span> <a href=\"?project={$_GET['project']}&file={$path}/{$item}\">{$item}</a></li>\n";
+        $html.="<li class=\"list-item\"><span class=\"glyphicon glyphicon-file\"></span> <a href=\"?project={$_GET['project']}&item={$path}/{$item}\">{$item}</a></li>\n";
       }
     }
     
@@ -292,44 +292,83 @@ class Project
     $cfg=new IDEINI('settings');
     $path=ltrim($path,"/");
     $fpath=$cfg->root.$this->info->Folder."/".$path;
-    $type=mime_content_type($fpath);
-    list($main,$sub)=explode("/",$type);
-    switch ($main)
+    if (is_dir($fpath))
     {
-      case 'text':
-        $txt=htmlspecialchars(file_get_contents($fpath));
-        $ext=pathinfo($path,PATHINFO_EXTENSION);
-        switch ($ext)
+      $cflist="<ul class=\"list-unstyled\">\n";
+      foreach(preg_grep("/^([^.])/",scandir($fpath)) as $item)
+      {
+        if (is_dir($fpath.$item))
         {
-          case 'js':
-            $code="javascript";
-            break;
-          case 'html':
-          case 'htm':
-            $code="html";
-            break;
-          case 'md':
-          case 'mmd':
-            $code="markdown";
-            break;
-          default:
-            $code=$ext;
+          $cflist.="<li><span class=\"glyphicon glyphicon-folder-close\"></span> {$item}</li>\n";
         }
-        $content=<<<HTML
+        else
+        {
+          $cflist.="<li><span class=\"glyphicon glyphicon-file\"></span> {$item}</li>\n";
+        }
+      }
+      $cflist.="</ul>\n";
+      $content=<<<HTML
+  <div id="toolbar">
+  <div id="curFolder" class="operations btn-group">
+  <button id="newFolder" type="button" class="btn btn-default"><span class="glyphicon glyphicon-folder-close" title="New Folder"></span> New Folder</button>
+  <button type="button" class="btn btn-default" id="New File"><span class="glyphicon glyphicon-file" title="New File"></span> New File</button>
+  </div>
+  <div id="selFile" class="operations btn-group">
+  <button id="renameFile" type="button" disabled="disabled" class="btn btn-default"><span class="glyphicon glyphicon-pencil" title="Rename"></span></button>
+  <button id="openFile" type="button" disabled="disabled" class="btn btn-default"><span class="glyphicon glyphicon-open" title="Open File"></span></button>
+  <button id="delFile" type="button" disabled="disabled" class="btn btn-danger"><span class="glyphicon glyphicon-trash" title="Delete File"></button>
+  </div>
+  </div>
+  <div id="itemList">
+  {$cflist}
+  </div>
+HTML;
+    }
+    else
+    {
+      $type=mime_content_type($fpath);
+      list($main,$sub)=explode("/",$type);
+      switch ($main)
+      {
+        case 'text':
+          $txt=htmlspecialchars(file_get_contents($fpath));
+          $ext=pathinfo($path,PATHINFO_EXTENSION);
+          switch ($ext)
+          {
+            case 'js':
+              $code="javascript";
+              break;
+            case 'html':
+            case 'htm':
+              $code="html";
+              break;
+            case 'md':
+            case 'mmd':
+              $code="markdown";
+              break;
+            default:
+              $code=$ext;
+          }
+          $content=<<<HTML
+<div class="preview text">
 <div id="operations" class="btn-group">
 <button type="button" id="save" class="btn btn-primary">Save</button>
 <button type="button" id="view" class="btn btn-success">Preview</button>
 <button type="button" id="unlink" class="btn btn-danger">Delete!</button>
 </div>
-<div id="editor" class="preview text">{$txt}</div>
+<div id="editor">
+<div id="aceCon">{$txt}</div>
+</div>
 <form id="FinalText" action="./?action=save" method="post">
 <input type="hidden" name="text" value="">
 </form>
+</div>
 <script src="./ide-core/ace/ace.js"></script>
 <script>
-    var editor = ace.edit("editor");
+    var editor = ace.edit("aceCon");
     editor.setTheme("ace/theme/dreamweaver");
     editor.getSession().setMode("ace/mode/{$code}");
+    editor.setKeyboardHandler("ace/keyboard/vim");
         
     $("#operations button#save").click(function(){
       var txt=editor.getValue();
@@ -348,21 +387,22 @@ class Project
     });
 </script>
 HTML;
-        break;
-      case 'image':
-        switch ($sub)
-        {
-          case 'jpg':
-          case 'png':
-            $content="<div class=\"preview image\"><img src=\"{$cfg->url}{$this->info->Folder}/{$path}\"></div>\n";
-            break;
-          default:
-            $content="<div class=\"alert alert-warning\">The image '{$path}' cannot be viewed in browser, '{$sub}' not supported!</div>\n";
-        }
-        break;
-      case 'application':
-      default:
-        $content="<div class=\"alert alert-warning\">The file '{$path}' cannot be opened because there is no preview available for the type '{$type}'.</div>\n";
+          break;
+        case 'image':
+          switch ($sub)
+          {
+            case 'jpg':
+            case 'png':
+              $content="<div class=\"preview image\"><img src=\"{$cfg->url}{$this->info->Folder}/{$path}\"></div>\n";
+              break;
+            default:
+              $content="<div class=\"alert alert-warning\">The image '{$path}' cannot be viewed in browser, '{$sub}' not supported!</div>\n";
+          }
+          break;
+        case 'application':
+        default:
+          $content="<div class=\"alert alert-warning\">The file '{$path}' cannot be opened because there is no preview available for the type '{$type}'.</div>\n";
+      }
     }
     
     return $content;
