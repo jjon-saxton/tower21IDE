@@ -69,6 +69,19 @@ HTML;
 
     switch ($action)
     {
+      case 'newfile':
+      case 'newfolder':
+      case 'renamefile':
+        $proj=new Project($_GET['project'],$this->user);
+        if ($proj->itemUpdate($action,$_GET['parent'],$_POST['item']))
+        {
+          header("Location: ./?project={$_GET['project']}&item={$_GET['parent']}");
+        }
+        else
+        {
+          $vars['message']="<div class=\"alert alert-danger\">Item {$_POST['item']} could not be added to {$_GET['parent']}!</div>\n";
+        }
+        break;
       case 'save':
         $vars['title']="Save File";
         if (empty($_GET['project']))
@@ -349,13 +362,13 @@ class Project
       updateSelFile();
     });
     $("button#newFolder").click(function(){
-      $(".folder-item-list").append('<form action="?action=newfolder&project={$_GET['project']}&parent={$_GET['item']}" method="post"><li class="list-group-item"><div class="input-group"><input type="text" class="form-control" placeholder="New Folder..." id="item"><span class="input-group-btn"><button type="submit" class="btn btn-primary">Go</button></span></form></li>');
+      $(".folder-item-list").append('<form action="?action=newfolder&project={$_GET['project']}&parent={$_GET['item']}" method="post"><li class="list-group-item"><div class="input-group"><input type="text" class="form-control" placeholder="New Folder..." name="item"><span class="input-group-btn"><button type="submit" class="btn btn-primary">Go</button></span></form></li>');
     });
     $("button#newFile").click(function(){
-      $(".folder-item-list").append('<form action="?action=newfile&project={$_GET['project']}&parent={$_GET['item']}" method="post"><li class="list-group-item"><div class="input-group"><input type="text" class="form-control" placeholder="New File..." id="item"><span class="input-group-btn"><button type="submit" class="btn btn-primary">Go</button></span></form></li>');
+      $(".folder-item-list").append('<form action="?action=newfile&project={$_GET['project']}&parent={$_GET['item']}" method="post"><li class="list-group-item"><div class="input-group"><input type="text" class="form-control" placeholder="New File..." name="item"><span class="input-group-btn"><button type="submit" class="btn btn-primary">Go</button></span></form></li>');
     });
     $("button#openFile").click(function(){
-      var url="?project={$_GET['project']}&item={$_GET['item']}"+$(".folder-item-list").children('.active').data('item');
+      var url="?project={$_GET['project']}&item={$_GET['item']}/"+$(".folder-item-list").children('.active').data('item');
       window.location=url;
     });
   });
@@ -472,6 +485,23 @@ HTML;
     $fpath=$cfg->root.$this->info->Folder."/".$path;
     
     return file_put_contents($fpath,$content);
+  }
+  
+  public function itemUpdate($do,$where=null,$what)
+  {
+    $fpath=$cfg->root.$this->info->Folder.$where;
+    switch ($do)
+    {
+      case 'newfolder':
+        return mkdir($fpath.'/'.$what);
+        break;
+      case 'newfile':
+        return true; //TODO actually create file
+        break;
+      case 'rename':
+        return true; //TODO actually rename file
+        break;
+    }
   }
   
   public function fileExists($path)
