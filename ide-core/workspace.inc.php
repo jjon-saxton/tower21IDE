@@ -295,16 +295,16 @@ class Project
     $fpath=$cfg->root.$this->info->Folder."/".$path;
     if (is_dir($fpath))
     {
-      $cflist="<ul class=\"list-unstyled\">\n";
+      $cflist="<ul class=\"folder-item-list list-group\">\n";
       foreach(preg_grep("/^([^.])/",scandir($fpath)) as $item)
       {
         if (is_dir($fpath.$item))
         {
-          $cflist.="<li><span class=\"glyphicon glyphicon-folder-close\"></span> {$item}</li>\n";
+          $cflist.="<li class=\"list-group-item\"><span class=\"glyphicon glyphicon-folder-close\"></span> {$item}</li>\n";
         }
         else
         {
-          $cflist.="<li><span class=\"glyphicon glyphicon-file\"></span> {$item}</li>\n";
+          $cflist.="<li class=\"list-group-item\"><span class=\"glyphicon glyphicon-file\"></span> {$item}</li>\n";
         }
       }
       $cflist.="</ul>\n";
@@ -315,14 +315,41 @@ class Project
   <button type="button" class="btn btn-default" id="New File"><span class="glyphicon glyphicon-file" title="New File"></span> New File</button>
   </div>
   <div id="selFile" class="operations btn-group">
-  <button id="renameFile" type="button" disabled="disabled" class="btn btn-default"><span class="glyphicon glyphicon-pencil" title="Rename"></span></button>
-  <button id="openFile" type="button" disabled="disabled" class="btn btn-default"><span class="glyphicon glyphicon-open" title="Open File"></span></button>
-  <button id="delFile" type="button" disabled="disabled" class="btn btn-danger"><span class="glyphicon glyphicon-trash" title="Delete File"></button>
+  <button id="renameFile" type="button" disabled="disabled" class="btn btn-default"><span class="glyphicon glyphicon-pencil" title="Rename Item"></span></button>
+  <button id="openFile" type="button" disabled="disabled" class="btn btn-default"><span class="glyphicon glyphicon-open" title="Open Item"></span></button>
+  <button id="delFile" type="button" disabled="disabled" class="btn btn-danger"><span class="glyphicon glyphicon-trash" title="Delete Item(s)"></button>
   </div>
   </div>
   <div id="itemList">
   {$cflist}
   </div>
+  <script language="javascript">
+  function updateSelFile(){
+    if ($(".folder-item-list").children('.active').size() == 1){
+      $("button#delFile").removeAttr('disabled');
+      $("button#renameFile").removeAttr('disabled');
+      $("button#openFile").removeAttr('disabled');
+    }
+    else{
+      $("#selFile").children().attr('disabled','disabled');
+      if ($(".folder-item-list").children('.active').size() > 0){
+        $("button#delFile").removeAttr('disabled');
+      }
+    }
+  }
+  
+  $(function(){
+    updateSelFile();
+    $(".folder-item-list").children().click(function(){
+      if ($(this).hasClass('active')){
+        $(this).removeClass('active');
+      } else {
+        $(this).addClass('active');
+      }
+      updateSelFile();
+    });
+  });
+  </script>
 HTML;
     }
     else
