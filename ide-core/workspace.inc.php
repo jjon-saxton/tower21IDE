@@ -300,11 +300,11 @@ class Project
       {
         if (is_dir($fpath.$item))
         {
-          $cflist.="<li class=\"list-group-item\"><span class=\"glyphicon glyphicon-folder-close\"></span> {$item}</li>\n";
+          $cflist.="<li class=\"list-group-item\" data-item=\"{$item}\"><span class=\"glyphicon glyphicon-folder-close\"></span> {$item}</li>\n";
         }
         else
         {
-          $cflist.="<li class=\"list-group-item\"><span class=\"glyphicon glyphicon-file\"></span> {$item}</li>\n";
+          $cflist.="<li class=\"list-group-item\" data-item=\"{$item}\"><span class=\"glyphicon glyphicon-file\"></span> {$item}</li>\n";
         }
       }
       $cflist.="</ul>\n";
@@ -312,7 +312,7 @@ class Project
   <div id="toolbar">
   <div id="curFolder" class="operations btn-group">
   <button id="newFolder" type="button" class="btn btn-default"><span class="glyphicon glyphicon-folder-close" title="New Folder"></span> New Folder</button>
-  <button type="button" class="btn btn-default" id="New File"><span class="glyphicon glyphicon-file" title="New File"></span> New File</button>
+  <button  id="newFile" type="button" class="btn btn-default"><span class="glyphicon glyphicon-file" title="New File"></span> New File</button>
   </div>
   <div id="selFile" class="operations btn-group">
   <button id="renameFile" type="button" disabled="disabled" class="btn btn-default"><span class="glyphicon glyphicon-pencil" title="Rename Item"></span></button>
@@ -347,6 +347,16 @@ class Project
         $(this).addClass('active');
       }
       updateSelFile();
+    });
+    $("button#newFolder").click(function(){
+      $(".folder-item-list").append('<form action="?action=newfolder&project={$_GET['project']}&parent={$_GET['item']}" method="post"><li class="list-group-item"><div class="input-group"><input type="text" class="form-control" placeholder="New Folder..." id="item"><span class="input-group-btn"><button type="submit" class="btn btn-primary">Go</button></span></form></li>');
+    });
+    $("button#newFile").click(function(){
+      $(".folder-item-list").append('<form action="?action=newfile&project={$_GET['project']}&parent={$_GET['item']}" method="post"><li class="list-group-item"><div class="input-group"><input type="text" class="form-control" placeholder="New File..." id="item"><span class="input-group-btn"><button type="submit" class="btn btn-primary">Go</button></span></form></li>');
+    });
+    $("button#openFile").click(function(){
+      var url="?project={$_GET['project']}&item={$_GET['item']}"+$(".folder-item-list").children('.active').data('item');
+      window.location=url;
     });
   });
   </script>
