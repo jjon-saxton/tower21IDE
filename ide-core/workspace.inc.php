@@ -330,6 +330,7 @@ class Project
     var editor = ace.edit("editor");
     editor.setTheme("ace/theme/dreamweaver");
     editor.getSession().setMode("ace/mode/{$code}");
+    editor.setKeyboardHandler("ace/keyboard/vim");
         
     $("#operations button#save").click(function(){
       var txt=editor.getValue();
