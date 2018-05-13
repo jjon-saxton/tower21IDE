@@ -5,11 +5,20 @@ body.dragging, body.dragging * {
   cursor: move !important;
 }
 
-.text{
+#editor{
   position:relative;
-  top:1em;
-  height:680px;
-  margin-bottom: 1em;
+  width:100%;
+  height: 650px;
+  color:#fff;
+  background-color:#fff;
+}
+
+#aceCon{
+  position:absolute;
+  top:0;
+  bottom:0;
+  left:0;
+  right:0;
 }
 
 .dragged {
@@ -25,6 +34,14 @@ body.dragging, body.dragging * {
   -webkit-box-shadow: 0px 0px 10px #888;
   -moz-box-shadow: 0px 0px 10px #888;
   box-shadow: 0px 0px 10px #888;
+}
+
+.no-margin {
+  margin: 0 !important;
+}
+
+.no-padding {
+  padding: 0 !important;
 }
 
 ul.filelist {
