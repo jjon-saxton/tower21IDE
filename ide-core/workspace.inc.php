@@ -98,10 +98,42 @@ HTML;
   
   public function getForm($formname=null)
   {
+    switch ($formname)
+    {
+      case 'addproject':
+        $managers=array(); //Get list of managers and admins
+        foreach ($managers as $manager);
+        {
+          //$mopts.="<option value=\"{$manager->ID}\">{$manager->Handle}</option>\n";
+        }
+        $vars['title']="Add Project";
+        $vars['form']=<<<HTML
+<form action="{$cfg->url}?action=saveproject" method="post">
+<label for="name">Project Name</label>
+<input type="text" name="Name" id="name" class="form-control">
+<label for="manager">Project Manager</label>
+<select id="manager" name="Manager" class="form-control">{$mopts}</select>
+<label for="type">Type</label>
+<input type="text" maxlength="10" id="type" name="Type" class="form-control">
+<label for="folder">Folder</label>
+<input type="text" id="folder" name="Folder" class="form-control">
+<label for="git">GIT Push URI</label>
+<input type="text" id="git" name="GIT" class="form-control">
+<label for="desc">Description</label>
+<textarea id="desc" rows="5" class="form-control" name="Description" placeholder="Enter project description..."></textarea>
+<hr>
+<div class="text-center"><button type="submit" class="btn btn-primary">Add</button></div>
+</form>
+HTML;
+        break;
+    }
+    
     $cfg=new IDEINI('settings');
     if (empty($_GET['modal']))
     {
       $html=$this->template;
+      $vars['filelist']="<div id=\"helpTarget\" class=\"alert-info\">Form submission needed!</div>\n";
+      $vars['cfile']="<h1>{$vars['title']}</h1>\n<p>{$vars['form']}</p>\n";
     }
     else
     {
@@ -112,23 +144,6 @@ HTML;
 </div>
 <div class="modal-body"><var>form</var></div>
 HTML;
-    }
-    
-    switch ($formname)
-    {
-      case 'login':
-        $vars['title']="Login";
-        $vars['form']=<<<HTML
-<form action="{$cfg->url}?action=login" method="post">
-<label for="name">Handle</label>
-<input type="text" name="Handle" id="name" class="form-control">
-<label for="pass">Password</label>
-<input type="password" name="Password" id="pass" class="form-control">
-<hr>
-<div class="text-center"><button type="submit" class="btn btn-primary">Login</button></div>
-</form>
-HTML;
-        break;
     }
     
     return $this->replaceVars($vars,$html);
@@ -148,7 +163,7 @@ HTML;
     $vars['sitename']=$cfg->name;
     if (@$this->user->Type == "guest")
     {
-      $vars['userbtns']="<div id=\"MainToolbar\" class=\"btn-group\"><a href=\"{$cfg->url}?action=login&modal=1\" data-toggle=\"modal\" data-target=\"#AJAXModal\" id=\"login\" class=\"btn btn-default\">Login</a></div>\n";
+      $vars['userbtns']="<div id=\"MainToolbar\" class=\"btn-group\"><a href=\"mail:cem@tower21studios.com?subject=Dev+Access\" class=\"btn btn-danger\">Unauthorized!</a></div>\n";
     }
     else
     {
@@ -160,9 +175,6 @@ HTML;
     <li><a href="#">Your Settings</a></li>
     <li><a href="#">Contribute</a></li>
     <li><a href="#">Change Password</a></li>
-    <li><hr /></li>
-    <li><a href="#">Help</a></li>
-    <li><a href="./?action=logout">Logout</a></li>
   </ul>
   </div>
 HTML;
@@ -189,7 +201,7 @@ HTML;
   <div class="btn-group">
   <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">{$cpname} <span class="caret"></span></button>
   <ul class="dropdown-menu">
-    <li><a href="#">Add Project</a></li>
+    <li><a href="?section=addproject">Add Project</a></li>
     {$cpopts}
   </ul>
   </div>
