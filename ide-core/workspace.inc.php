@@ -30,7 +30,7 @@ class WorkSpace
       }
       if (empty($vars['cfile']))
       {
-        if (empty($_GET['item']))
+        if (empty($_GET['file']))
         {
           $vars['cfile']=$cproj->Description;
           if ($cproj->fileExists("/README.md"))
@@ -42,7 +42,7 @@ class WorkSpace
         }
         else
         {
-          $vars['cfile']=$cproj->openFile($_GET['item']);
+          $vars['cfile']=$cproj->openFile($_GET['file']);
         }
       }
     }
@@ -69,19 +69,6 @@ HTML;
 
     switch ($action)
     {
-      case 'newfile':
-      case 'newfolder':
-      case 'renamefile':
-        $proj=new Project($_GET['project'],$this->user);
-        if ($proj->itemUpdate($action,$_GET['parent'],$_POST['item']))
-        {
-          header("Location: ./?project={$_GET['project']}&item={$_GET['parent']}");
-        }
-        else
-        {
-          $vars['message']="<div class=\"alert alert-danger\">Item {$_POST['item']} could not be added to {$_GET['parent']}!</div>\n";
-        }
-        break;
       case 'save':
         $vars['title']="Save File";
         if (empty($_GET['project']))
@@ -194,7 +181,6 @@ HTML;
          $cpname=$cp->Name;
          $cpopts=<<<HTML
 <li><a href="./{$cp->Folder}" target="_new">View Project</a></li>
-<li><a href="./?project={$_GET['project']}&item=/">Open Project Directory</a></li>
 <li><a href="#">Project Settings</a></li>
 <li><a href="#">Remove Project</a></li>
 HTML;
@@ -290,11 +276,11 @@ class Project
     {
       if (is_dir($fpath."/".$item))
       {
-        $html.="<li class=\"list-item\"><span class=\"glyphicon glyphicon-folder-close\"></span> <a href=\"?project={$_GET['project']}&item={$path}/{$item}\">{$item}</a>\n".$this->fetchFiles($path."/".$item)."</li>\n";
+        $html.="<li class=\"list-item\"><span class=\"glyphicon glyphicon-folder-close\"></span> {$item}\n".$this->fetchFiles($path."/".$item)."</li>\n";
       }
       else
       {
-        $html.="<li class=\"list-item\"><span class=\"glyphicon glyphicon-file\"></span> <a href=\"?project={$_GET['project']}&item={$path}/{$item}\">{$item}</a></li>\n";
+        $html.="<li class=\"list-item\"><span class=\"glyphicon glyphicon-file\"></span> <a href=\"?project={$_GET['project']}&file={$path}/{$item}\">{$item}</a></li>\n";
       }
     }
     
@@ -306,117 +292,42 @@ class Project
     $cfg=new IDEINI('settings');
     $path=ltrim($path,"/");
     $fpath=$cfg->root.$this->info->Folder."/".$path;
-    if (is_dir($fpath))
+    $type=mime_content_type($fpath);
+    list($main,$sub)=explode("/",$type);
+    switch ($main)
     {
-      $cflist="<ul class=\"folder-item-list list-group\">\n";
-      foreach(preg_grep("/^([^.])/",scandir($fpath)) as $item)
-      {
-        if (is_dir($fpath.$item))
+      case 'text':
+        $txt=htmlspecialchars(file_get_contents($fpath));
+        $ext=pathinfo($path,PATHINFO_EXTENSION);
+        switch ($ext)
         {
-          $cflist.="<li class=\"list-group-item\" data-item=\"{$item}\"><span class=\"glyphicon glyphicon-folder-close\"></span> {$item}</li>\n";
+          case 'js':
+            $code="javascript";
+            break;
+          case 'html':
+          case 'htm':
+            $code="html";
+            break;
+          case 'md':
+          case 'mmd':
+            $code="markdown";
+            break;
+          default:
+            $code=$ext;
         }
-        else
-        {
-          $cflist.="<li class=\"list-group-item\" data-item=\"{$item}\"><span class=\"glyphicon glyphicon-file\"></span> {$item}</li>\n";
-        }
-      }
-      $cflist.="</ul>\n";
-      $content=<<<HTML
-  <div id="toolbar">
-  <div id="curFolder" class="operations btn-group">
-  <button id="newFolder" type="button" class="btn btn-default"><span class="glyphicon glyphicon-folder-close" title="New Folder"></span> New Folder</button>
-  <button  id="newFile" type="button" class="btn btn-default"><span class="glyphicon glyphicon-file" title="New File"></span> New File</button>
-  </div>
-  <div id="selFile" class="operations btn-group">
-  <button id="renameFile" type="button" disabled="disabled" class="btn btn-default"><span class="glyphicon glyphicon-pencil" title="Rename Item"></span></button>
-  <button id="openFile" type="button" disabled="disabled" class="btn btn-default"><span class="glyphicon glyphicon-open" title="Open Item"></span></button>
-  <button id="delFile" type="button" disabled="disabled" class="btn btn-danger"><span class="glyphicon glyphicon-trash" title="Delete Item(s)"></button>
-  </div>
-  </div>
-  <div id="itemList">
-  {$cflist}
-  </div>
-  <script language="javascript">
-  function updateSelFile(){
-    if ($(".folder-item-list").children('.active').size() == 1){
-      $("button#delFile").removeAttr('disabled');
-      $("button#renameFile").removeAttr('disabled');
-      $("button#openFile").removeAttr('disabled');
-    }
-    else{
-      $("#selFile").children().attr('disabled','disabled');
-      if ($(".folder-item-list").children('.active').size() > 0){
-        $("button#delFile").removeAttr('disabled');
-      }
-    }
-  }
-  
-  $(function(){
-    updateSelFile();
-    $(".folder-item-list").children().click(function(){
-      if ($(this).hasClass('active')){
-        $(this).removeClass('active');
-      } else {
-        $(this).addClass('active');
-      }
-      updateSelFile();
-    });
-    $("button#newFolder").click(function(){
-      $(".folder-item-list").append('<form action="?action=newfolder&project={$_GET['project']}&parent={$_GET['item']}" method="post"><li class="list-group-item"><div class="input-group"><input type="text" class="form-control" placeholder="New Folder..." name="item"><span class="input-group-btn"><button type="submit" class="btn btn-primary">Go</button></span></form></li>');
-    });
-    $("button#newFile").click(function(){
-      $(".folder-item-list").append('<form action="?action=newfile&project={$_GET['project']}&parent={$_GET['item']}" method="post"><li class="list-group-item"><div class="input-group"><input type="text" class="form-control" placeholder="New File..." name="item"><span class="input-group-btn"><button type="submit" class="btn btn-primary">Go</button></span></form></li>');
-    });
-    $("button#openFile").click(function(){
-      var url="?project={$_GET['project']}&item={$_GET['item']}/"+$(".folder-item-list").children('.active').data('item');
-      window.location=url;
-    });
-  });
-  </script>
-HTML;
-    }
-    else
-    {
-      $type=mime_content_type($fpath);
-      list($main,$sub)=explode("/",$type);
-      switch ($main)
-      {
-        case 'text':
-          $txt=htmlspecialchars(file_get_contents($fpath));
-          $ext=pathinfo($path,PATHINFO_EXTENSION);
-          switch ($ext)
-          {
-            case 'js':
-              $code="javascript";
-              break;
-            case 'html':
-            case 'htm':
-              $code="html";
-              break;
-            case 'md':
-            case 'mmd':
-              $code="markdown";
-              break;
-            default:
-              $code=$ext;
-          }
-          $content=<<<HTML
-<div class="preview text">
+        $content=<<<HTML
 <div id="operations" class="btn-group">
 <button type="button" id="save" class="btn btn-primary">Save</button>
 <button type="button" id="view" class="btn btn-success">Preview</button>
 <button type="button" id="unlink" class="btn btn-danger">Delete!</button>
 </div>
-<div id="editor">
-<div id="aceCon">{$txt}</div>
-</div>
+<div id="editor" class="preview text">{$txt}</div>
 <form id="FinalText" action="./?action=save" method="post">
 <input type="hidden" name="text" value="">
 </form>
-</div>
 <script src="./ide-core/ace/ace.js"></script>
 <script>
-    var editor = ace.edit("aceCon");
+    var editor = ace.edit("editor");
     editor.setTheme("ace/theme/dreamweaver");
     editor.getSession().setMode("ace/mode/{$code}");
     editor.setKeyboardHandler("ace/keyboard/vim");
@@ -438,22 +349,21 @@ HTML;
     });
 </script>
 HTML;
-          break;
-        case 'image':
-          switch ($sub)
-          {
-            case 'jpg':
-            case 'png':
-              $content="<div class=\"preview image\"><img src=\"{$cfg->url}{$this->info->Folder}/{$path}\"></div>\n";
-              break;
-            default:
-              $content="<div class=\"alert alert-warning\">The image '{$path}' cannot be viewed in browser, '{$sub}' not supported!</div>\n";
-          }
-          break;
-        case 'application':
-        default:
-          $content="<div class=\"alert alert-warning\">The file '{$path}' cannot be opened because there is no preview available for the type '{$type}'.</div>\n";
-      }
+        break;
+      case 'image':
+        switch ($sub)
+        {
+          case 'jpg':
+          case 'png':
+            $content="<div class=\"preview image\"><img src=\"{$cfg->url}{$this->info->Folder}/{$path}\"></div>\n";
+            break;
+          default:
+            $content="<div class=\"alert alert-warning\">The image '{$path}' cannot be viewed in browser, '{$sub}' not supported!</div>\n";
+        }
+        break;
+      case 'application':
+      default:
+        $content="<div class=\"alert alert-warning\">The file '{$path}' cannot be opened because there is no preview available for the type '{$type}'.</div>\n";
     }
     
     return $content;
@@ -485,23 +395,6 @@ HTML;
     $fpath=$cfg->root.$this->info->Folder."/".$path;
     
     return file_put_contents($fpath,$content);
-  }
-  
-  public function itemUpdate($do,$where=null,$what)
-  {
-    $fpath=$cfg->root.$this->info->Folder.$where;
-    switch ($do)
-    {
-      case 'newfolder':
-        return mkdir($fpath.'/'.$what);
-        break;
-      case 'newfile':
-        return true; //TODO actually create file
-        break;
-      case 'rename':
-        return true; //TODO actually rename file
-        break;
-    }
   }
   
   public function fileExists($path)

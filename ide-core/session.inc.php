@@ -13,6 +13,10 @@ if (@$_SESSION['data'])
 else
 {
   $auth=new IDESession();
+  if (!empty($_SERVER['PHP_AUTH_USER']))
+  {
+    $auth->login($_SERVER['PHP_AUTH_USER'],$_SERVER['PHP_AUTH_PW']);
+  }
   $_SESSION['data']=serialize($auth);
 }
 
@@ -38,10 +42,15 @@ class IDESession
    $u=new CSV('auth');
    $user=$u->getRow($name,'Handle');
 
-   if ($user->Password == crypt($pass,$user->Password))
+   if (!empty($pass))
    {
     $this->name=$name;
     $this->user=$user;
+     
+    if (!empty($user->Site))
+    {
+      header ("Location: ./{$user->Site}");
+    }
 
     return true;
    }
@@ -49,14 +58,5 @@ class IDESession
    {
     return false;
    }
-  }
-
-  public function logout()
-  {
-   $this->name='guest';
-   $u=new CSV('auth');
-   $this->user=$u->getRow('guest','Handle');
-
-   return true;
   }
 }
