@@ -101,22 +101,74 @@ HTML;
     switch ($formname)
     {
       case 'addproject':
-        $managers=array(); //Get list of managers and admins
-        foreach ($managers as $manager);
+        $table=new CSV('auth');
+        $aq=$table->query('Type=admin');
+        if (!empty($aq))
         {
-          //$mopts.="<option value=\"{$manager->ID}\">{$manager->Handle}</option>\n";
+          $acand=$aq->fetchAll();
+        }
+        else
+        {
+          $acand=array();
+        }
+        $mq=$table->query('Type=manager');
+        if (!empty($mq))
+        {
+          $mcand=$mq->fetchAll();
+        }
+        else
+        {
+          $mcand=array();
+        }
+        
+        $ulist=array_merge($acand,$mcand);
+        
+        foreach ($ulist as $manager);
+        {
+          $mopts.="<option value=\"{$manager['ID']}\">{$manager['First']} {$manager['Last']} ({$manager['Handle']})</option>\n";
         }
         $vars['title']="Add Project";
         $vars['form']=<<<HTML
+<script language="javascript" type="text/javascript">
+$(function(){
+  $('.form-control').focus(function(){
+    var id=$(this).attr('id');
+    var tip;
+    switch (id){
+      case 'name':
+        tip="What should we call your project?";
+        break;
+      case 'manager':
+        tip="Select the registered user who will manage this project.";
+        break;
+      case 'type':
+        tip="Brief description of the type of project this is";
+        break;
+      case 'folder':
+        tip="Root folder under which to store the files and folders for your project.";
+        break;
+      case 'git':
+        tip="The URI where we will push git changes to, ignore if a git project is not set up or required.";
+        break;
+      case 'desc':
+        tip="A description of your project. Most of this will be in your README, so please keep it clear and concise here.";
+          break;
+    }
+    $("#helpTarget").text(tip);
+  }).blur(function(){
+    $("#helpTarget").text('Ready to submit form data?');
+  });
+});
+</script>
 <form action="{$cfg->url}?action=saveproject" method="post">
 <label for="name">Project Name</label>
-<input type="text" name="Name" id="name" class="form-control">
+<input type="text" name="Name" id="name" required="required" class="form-control">
 <label for="manager">Project Manager</label>
-<select id="manager" name="Manager" class="form-control">{$mopts}</select>
+<select id="manager" name="Manager" required="required" class="form-control">{$mopts}</select>
 <label for="type">Type</label>
 <input type="text" maxlength="10" id="type" name="Type" class="form-control">
 <label for="folder">Folder</label>
-<input type="text" id="folder" name="Folder" class="form-control">
+<input type="text" id="folder" name="Folder" required="required" class="form-control">
 <label for="git">GIT Push URI</label>
 <input type="text" id="git" name="GIT" class="form-control">
 <label for="desc">Description</label>
