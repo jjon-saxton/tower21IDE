@@ -69,6 +69,33 @@ HTML;
 
     switch ($action)
     {
+      case 'saveproject':
+        $vars['title']="Save Project";
+        if (empty($_REQUEST['project']))
+        {
+          $np=new ProjectList($this->user);
+          if ($item=$np->put($data))
+          {
+            $vars['message']="<div class=\"alert alert-info\">Your project has been added!</div>\n";
+          }
+          else
+          {
+            $vars['message']="<div class=\"alert alert-warning\">Could not add your project!</div>\n";
+          }
+        }
+        else
+        {
+          $up=new Project($_REQUEST['project'],$this->user);
+          if ($item=$up->edit($data))
+          {
+            $vars['message']="<div class=\"alert alert-info\">Your project information has been updated!</div>\n";
+          }
+          else
+          {
+            $vars['message']="<div class=\"alert alert-warning\">Could not updated project information!</div>\n";
+          }
+        }
+        break;
       case 'save':
         $vars['title']="Save File";
         if (empty($_GET['project']))
@@ -91,6 +118,12 @@ HTML;
             $vars['message']="<div class=\"alert alert-warning\">Could not save file! This is likely a server error, please try again.</div>\n";
           }
         }
+    }
+    
+    if (empty($_GET['modal']))
+    {
+      $vars['filelist']="<div class=\"alert alert-info\">Saving changes...</div>\n";
+      $vars['cfile']=$vars['message'];
     }
     
     return $this->replaceVars($vars,$html);
@@ -500,5 +533,39 @@ class ProjectList
     }
     
     return $html.="</ul>\n";
+  }
+  
+  public function put($data)
+  {
+    $cfg=new IDEINI('settings');
+    if (!empty($data['Folder']))
+    {
+      if (mkdir($cfg->root.$data['Folder']))
+      {
+        $start=<<<MARKDOWN
+{$data['Name']}
+===============
+{$data['Description']}
+MARKDOWN;
+        file_put_contents($cfg->root.$data['Folder']."/README.md",$start);
+        if ($item=$this->table->addRow($data))
+        {
+          return $item;
+        }
+        else
+        {
+          rmdir($cfg->root.$data['Folder']);
+          return false;
+        }
+      }
+      else
+      {
+        return false;
+      }
+    }
+    else
+    {
+      return false;
+    }
   }
 }

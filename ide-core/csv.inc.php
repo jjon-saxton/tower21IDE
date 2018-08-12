@@ -185,7 +185,7 @@ class CSV
     if (fputcsv($f,$nr))
     {
       fclose($f);
-      return new MikaCSVRow($nr);
+      return new CSVRow($nr);
     }
     else
     {
