@@ -96,6 +96,25 @@ HTML;
           }
         }
         break;
+      case 'delproject':
+        $vars['title']="Delete Project";
+        if (!empty($_GET['project']) || !empty($_POST['confirm']))
+        {
+          $proj=new Project($_GET['project'],$this->user);
+          if ($proj->drop())
+          {
+            $vars['message']="<div class=\"alert alert-info\">Your project and its folder have been removed!</div>\n";
+          }
+          else
+          {
+            $vars['message']="<div class=\"alert alert-warning\">Could not remove your project or its folder!</div>\n";
+          }
+        }
+        else
+        {
+          $vars['message']="<div class=\"alert alert-danger\">Could not continue, project number or confirmation was not set!</div>\n";
+        }
+        break;
       case 'save':
         $vars['title']="Save File";
         if (empty($_GET['project']))
@@ -214,6 +233,17 @@ $(function(){
 </form>
 HTML;
         break;
+      case 'dropproject':
+        $proj=new Project($_GET['project'],$this->user);
+        $vars['title']="Drop Project - ".$proj->Name;
+        $vars['form']=<<<HTML
+<form action="{$cfg->url}?action=delproject&project={$proj->ID}" method="post">
+<p>Are you sure you would like to remove the project '{$proj->Name}'? This process will also remove all files and sub-folders within the project folder (<code>{$proj->Folder}</code>). This action <strong>CANNOT</strong> be undone. Please backup in files or data you do not wish to lose <em>before</em> continuing.</p>
+<div class="text-center"><input type="checkbox" name="Confirm" value=1 required="required" id="acknowledge"><label for="acknowledge"> I have read and understand the above</label><br />
+<button type="submit" class="btn btn-danger">Continue?</button> <button onclick="history.back()" class="btn btn-info">Cancel</button></div>
+</form>
+HTML;
+        break;
     }
     
     $cfg=new IDEINI('settings');
@@ -282,7 +312,7 @@ HTML;
          $cpopts=<<<HTML
 <li><a href="./{$cp->Folder}" target="_new">View Project</a></li>
 <li><a href="./?section=info&project={$cp->ID}">Project Info</a></li>
-<li><a href="./?section=droppoject&project={$cp->ID}">Remove Project</a></li>
+<li><a href="./?section=dropproject&project={$cp->ID}">Remove Project</a></li>
 <li><hr /></li>
 <li><a href="./?section=newfolder&project={$cp->ID}">New Folder</a></li>
 <li><a href="./?section=newfile&project={$cp->ID}">New File</a></li>
@@ -520,9 +550,17 @@ HTML;
     return $this->table->updateRow($data);
   }
   
-  public function drop($data)
+  public function drop()
   {
-    var_dump($this->user); //TODO must remove Project from CSV and delete all project files
+    $cfg=new IDEINI('settings');
+    if ($this->table->delRow($_GET['project'],'ID'))
+    {
+      return rmdirr($cfg->root.$this->info->Folder);
+    }
+    else
+    {
+      return false;
+    }
   }
 }
 
