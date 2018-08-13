@@ -516,12 +516,13 @@ HTML;
   
   public function update($data)
   {
-    var_dump($auth); //TODO must update CSV data
+    $data['ID']=$_GET['project'];
+    return $this->table->updateRow($data);
   }
   
   public function drop($data)
   {
-    var_dump($auth); //TODO must remove Project from CSV and delete all project files
+    var_dump($this->user); //TODO must remove Project from CSV and delete all project files
   }
 }
 
