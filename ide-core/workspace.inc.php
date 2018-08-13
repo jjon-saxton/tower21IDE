@@ -71,7 +71,7 @@ HTML;
     {
       case 'saveproject':
         $vars['title']="Save Project";
-        if (empty($_REQUEST['project']))
+        if (empty($_GET['project']))
         {
           $np=new ProjectList($this->user);
           if ($item=$np->put($data))
@@ -85,8 +85,8 @@ HTML;
         }
         else
         {
-          $up=new Project($_REQUEST['project'],$this->user);
-          if ($item=$up->edit($data))
+          $up=new Project($_GET['project'],$this->user);
+          if ($item=$up->update($data))
           {
             $vars['message']="<div class=\"alert alert-info\">Your project information has been updated!</div>\n";
           }
@@ -133,6 +133,9 @@ HTML;
   {
     switch ($formname)
     {
+      case 'info':
+        $proj=new Project($_GET['project'],$this->user);
+        $parg="&project=".$_GET['project'];
       case 'addproject':
         $table=new CSV('auth');
         $aq=$table->query('Type=admin');
@@ -160,7 +163,7 @@ HTML;
         {
           $mopts.="<option value=\"{$manager['ID']}\">{$manager['First']} {$manager['Last']} ({$manager['Handle']})</option>\n";
         }
-        $vars['title']="Add Project";
+        $vars['title']="Project Information";
         $vars['form']=<<<HTML
 <script language="javascript" type="text/javascript">
 $(function(){
@@ -193,21 +196,21 @@ $(function(){
   });
 });
 </script>
-<form action="{$cfg->url}?action=saveproject" method="post">
+<form action="{$cfg->url}?action=saveproject{$parg}" method="post">
 <label for="name">Project Name</label>
-<input type="text" name="Name" id="name" required="required" class="form-control">
+<input type="text" name="Name" id="name" required="required" class="form-control" value="{$proj->Name}">
 <label for="manager">Project Manager</label>
 <select id="manager" name="Manager" required="required" class="form-control">{$mopts}</select>
 <label for="type">Type</label>
-<input type="text" maxlength="10" id="type" name="Type" class="form-control">
+<input type="text" maxlength="10" id="type" name="Type" class="form-control" value="{$proj->Type}">
 <label for="folder">Folder</label>
-<input type="text" id="folder" name="Folder" required="required" class="form-control">
+<input type="text" id="folder" name="Folder" required="required" class="form-control" value="{$proj->Folder}">
 <label for="git">GIT Push URI</label>
-<input type="text" id="git" name="GIT" class="form-control">
+<input type="text" id="git" name="GIT" class="form-control" value="{$proj->GIT}">
 <label for="desc">Description</label>
-<textarea id="desc" rows="5" class="form-control" name="Description" placeholder="Enter project description..."></textarea>
+<textarea id="desc" rows="5" class="form-control" name="Description" placeholder="Enter project description...">{$proj->Description}</textarea>
 <hr>
-<div class="text-center"><button type="submit" class="btn btn-primary">Add</button></div>
+<div class="text-center"><button type="submit" class="btn btn-primary">Save</button></div>
 </form>
 HTML;
         break;
@@ -278,8 +281,11 @@ HTML;
          $cpname=$cp->Name;
          $cpopts=<<<HTML
 <li><a href="./{$cp->Folder}" target="_new">View Project</a></li>
-<li><a href="#">Project Settings</a></li>
-<li><a href="#">Remove Project</a></li>
+<li><a href="./?section=info&project={$cp->ID}">Project Info</a></li>
+<li><a href="./?section=droppoject&project={$cp->ID}">Remove Project</a></li>
+<li><hr /></li>
+<li><a href="./?section=newfolder&project={$cp->ID}">New Folder</a></li>
+<li><a href="./?section=newfile&project={$cp->ID}">New File</a></li>
 HTML;
        }
        $vars['userbtns'].=<<<HTML
@@ -347,6 +353,11 @@ class Project
   public function __get($k)
   {
     return $this->info->$k;
+  }
+  
+  public function infoToArray()
+  {
+    return $this->info;
   }
   
   public function getInfoByName($name)
@@ -502,6 +513,16 @@ HTML;
     
     return file_exists($fpath);
   }
+  
+  public function update($data)
+  {
+    var_dump($auth); //TODO must update CSV data
+  }
+  
+  public function drop($data)
+  {
+    var_dump($auth); //TODO must remove Project from CSV and delete all project files
+  }
 }
 
 class ProjectList
@@ -567,5 +588,50 @@ MARKDOWN;
     {
       return false;
     }
+  }
+}
+
+function rmdirr($dir,$empty_only=false)
+{
+  rtrim($dir,"/");
+  if (file_exists($dir) && is_readable($dir))
+  {
+    $handle=opendir($dir);
+    while (FALSE !== ($item=readdir($handle)))
+    {
+      if ($item != '.' && $item != '..')
+      {
+	$path=$dir.'/'.$item;
+	if (is_dir($path))
+	{
+	  rmdirr($path);
+	}
+	else
+	{
+	  unlink($path);
+	}
+      }
+    }
+    closedir($handle);
+    
+    if ($empty_only == FALSE)
+    {
+      if (!rmdir($dir))
+      {
+	trigger_error("Unable to remove folder!",E_USER_ERROR);
+	return false;
+      }
+    }
+    return true;
+  }
+  elseif (!file_exists($dir))
+  {
+    trigger_error("Directory '{$dir}' does not exists!",E_USER_ERROR);
+    return false;
+  }
+  else
+  {
+    trigger_error("Directory '{$dir}' could not be opened for read!",E_USER_ERROR);
+    return false;
   }
 }
