@@ -115,6 +115,48 @@ HTML;
           $vars['message']="<div class=\"alert alert-danger\">Could not continue, project number or confirmation was not set!</div>\n";
         }
         break;
+      case 'newfolder':
+        if (empty($_GET['project']))
+        {
+          $vars['title']="Create Folder?";
+          $vars['message']="<div class=\"alert alert-danger\">A project must be selected so I know where to put your folder!</div>\n";
+        }
+        else
+        {
+          $cp=new Project($_GET['project'],$this->user);
+          $vars['title']="Create Folder in ".$cp->Name;
+          $cfg=new IDEINI('settings');
+          if (mkdir($cfg->root.$cp->Folder."/".$_POST['path']))
+          {
+            header("Location: {$cfg->url}?project=".$cp->ID);
+          }
+          else
+          {
+            $vars['message']="<div class=\"alert alert-warning\">Could not create folder '{$cp->Folder}{$_POST['path']}'!</div>\n";
+          }
+        }
+        break;
+      case 'newfile':
+        if (empty($_GET['project']))
+        {
+          $vars['title']="Create File?";
+          $vars['message']="<div class=\"alert alert-danger\">A prject must be selected or I don't know where to put your file!</div>\n";
+        }
+        else
+        {
+          $cp=new Project($_GET['project'],$this->user);
+          $vars['title']="Create new file in ".$cp->Name;
+          $cfg=new IDEINI('settings');
+          if (file_put_contents($cfg->root.$cp->Folder."/".$_POST['path'],"New Text"))
+          {
+            header("Location: {$cfg->url}?project={$cp->ID}&file=".$_POST['path']);
+          }
+          else
+          {
+            $vars['message']="<div class=\"alert alert-warning\">Could not create file '{$cp->Folder}{$_POST['path']}'!</div>\n";
+          }
+        }
+        break;
       case 'save':
         $vars['title']="Save File";
         if (empty($_GET['project']))
@@ -240,10 +282,22 @@ HTML;
 <form action="{$cfg->url}?action=delproject&project={$proj->ID}" method="post">
 <p>Are you sure you would like to remove the project '{$proj->Name}'? This process will also remove all files and sub-folders within the project folder (<code>{$proj->Folder}</code>). This action <strong>CANNOT</strong> be undone. Please backup in files or data you do not wish to lose <em>before</em> continuing.</p>
 <div class="text-center"><input type="checkbox" name="Confirm" value=1 required="required" id="acknowledge"><label for="acknowledge"> I have read and understand the above</label><br />
-<button type="submit" class="btn btn-danger">Continue?</button> <button onclick="history.back()" class="btn btn-info">Cancel</button></div>
+<button type="submit" class="btn btn-danger">Continue?</button> <button type="button" data-dismiss="modal" class="btn btn-info">Cancel</button></div>
 </form>
 HTML;
         break;
+      case 'newfolder':
+      case 'newfile':
+        $vars['title']="New File/Folder";
+        $vars['form']=<<<HTML
+<form action="{$cfg->url}?action={$_GET['section']}&project={$_GET['project']}" method="post">
+<label for="path">Path</label>
+<div class="input-group">
+<input type="text" name="path" class="form-control" placeholder="full path relative to project folder for your new file or folder">
+<span class="input-group-btn"><button type="submit" class="btn btn-primary">Create</button></span>
+</div>
+</form>
+HTML;
     }
     
     $cfg=new IDEINI('settings');
@@ -312,10 +366,10 @@ HTML;
          $cpopts=<<<HTML
 <li><a href="./{$cp->Folder}" target="_new">View Project</a></li>
 <li><a href="./?section=info&project={$cp->ID}">Project Info</a></li>
-<li><a href="./?section=dropproject&project={$cp->ID}">Remove Project</a></li>
+<li><a href="./?section=dropproject&project={$cp->ID}&modal=1" data-target="#AJAXModal" data-toggle="modal">Remove Project</a></li>
 <li><hr /></li>
-<li><a href="./?section=newfolder&project={$cp->ID}">New Folder</a></li>
-<li><a href="./?section=newfile&project={$cp->ID}">New File</a></li>
+<li><a href="./?section=newfolder&project={$cp->ID}&modal=1" data-target="#AJAXModal" data-toggle="modal">New Folder</a></li>
+<li><a href="./?section=newfile&project={$cp->ID}&modal=1" data-target="#AJAXModal" data-toggle="modal">New File</a></li>
 HTML;
        }
        $vars['userbtns'].=<<<HTML
